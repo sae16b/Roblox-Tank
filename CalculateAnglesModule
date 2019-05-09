@@ -1,0 +1,77 @@
+-- finds angle of some projectile going to some other location
+-- given its initial velocity, the distance it's going in both y and x directions
+-- and an acceleration for gravity
+
+local deg, sqrt = math.deg, math.sqrt;
+local atan, atan2 = math.atan, math.atan2;
+
+local g = 196.2;
+local p = g/2;
+
+local function CalculateXAngles(d, h, v)
+	local a = -(p*d^2)/v^2;
+	local c = -p*d^2/v^2 - h;
+
+	local sqrtGiven = sqrt(d^2 - 4*a*c);
+	local theta1 = atan((-d + sqrtGiven)/(2*a));
+	local theta2 = atan((-d - sqrtGiven)/(2*a));
+	
+--	print(deg(theta1)..", "..deg(theta2));	
+	
+	return theta1, theta2;
+end
+-- Both angles are shown, but the higher one is what we likely want.
+local function CalculateNeededXAngle1(d, h, v)
+	local a = -(p*d^2)/v^2;
+	local c = -p*d^2/v^2 - h;
+
+	local sqrtGiven = sqrt(d^2 - 4*a*c);
+	local theta1 = atan((-d - sqrtGiven)/(2*a));
+
+	return theta1;
+end
+local function CalculateNeededXAngle2(d, h, v)
+	local a = -(p*d^2)/v^2;
+	local c = -p*d^2/v^2 - h;
+
+	local sqrtGiven = sqrt(d^2 - 4*a*c);
+	local theta1 = atan((-d + sqrtGiven)/(2*a));
+
+	return theta1;
+end
+
+local function CalculateYAngle(deltaX, deltaZ)
+	return atan2(deltaX, deltaZ);
+end
+
+local projectileAngles = {};
+
+function projectileAngles.GetProjectileAngles(pos1, pos2, v, xAngleWanted)
+	v = v or 100; -- default at 100 speed
+	print(xAngleWanted);
+	xAngleWanted = xAngleWanted or 1;	
+	
+	local deltaX, deltaY, deltaZ = pos1.X-pos2.X, pos2.Y-pos1.Y, pos1.Z-pos2.Z;
+	local yAngle = CalculateYAngle(deltaX, deltaZ);
+	local xAngle;
+	if(xAngleWanted == 1) then
+		xAngle = CalculateNeededXAngle1(sqrt(deltaX^2+deltaZ^2), deltaY, v);
+	else
+		xAngle = CalculateNeededXAngle2(sqrt(deltaX^2+deltaZ^2), deltaY, v);
+	end
+	
+	CalculateXAngles(sqrt(deltaX^2+deltaZ^2), deltaY, v); -- testing, remove later
+	
+	return xAngle, yAngle;
+end
+	
+
+	
+	
+	
+return projectileAngles;
+	
+	
+	
+	
+	
