@@ -1,0 +1,100 @@
+local PhysicsFunctions = game.ReplicatedStorage:WaitForChild("PhysicsFunctions")
+local FindProjectileAngles = require(PhysicsFunctions:WaitForChild("CalculateAnglesModule")); 
+GetProjectileAngles = FindProjectileAngles.GetProjectileAngles;
+
+
+GetProjectileAngles(Vector3.new(0, 0, 0), Vector3.new(5, 5, 5), 5);
+
+
+function testGetProjectileAngles()
+	local xAngle, yAngle = GetProjectileAngles(Vector3.new(0, 0, 0), Vector3.new(0, -40, 600), 100);
+	print(math.deg(xAngle), math.deg(yAngle));
+end
+
+testGetProjectileAngles();
+
+function PrintAngles(...)
+	local t = {...};
+	for i, v in ipairs(t) do
+		v = math.deg(v);
+	end
+	print(table.concat(t, ', '));
+end
+
+function CreateProjectile(p1, v, model)
+	local proj = Instance.new("Part");
+	proj.CanCollide = false;
+	proj.Size = Vector3.new(1, 1, 1);
+	--proj.BrickColor = BrickColor.new("CGA brown");
+	proj.BrickColor = BrickColor.new("Really black");
+	proj.Material = "Neon";
+	proj.CFrame = p1.CFrame;
+	proj.Velocity = proj.CFrame.lookVector*v;
+	proj.Parent = model or workspace;
+	proj.Name = "Bullet";
+	proj.Touched:Connect(function(h)
+		if(h ~= p1) then
+			local explosion = Instance.new("Explosion", workspace);
+			explosion.Position = proj.Position;
+			proj:Destroy();
+		end
+	end)
+end
+
+function isNan(val)
+	return val ~= val;
+end
+
+function CheckForObjectsBetweenTanks(p1, p2, bulletsModel)
+	local ray = Ray.new(
+   		p1.Position,               
+		p2:WaitForChild("HumanoidRootPart").Position-p1.Position
+	) 
+	local ignore = {p2};
+	local hit = workspace:FindPartOnRayWithIgnoreList(ray, ignore);
+	if(hit) then
+		if(hit.Name == "Bullet") then
+			hit = nil;
+		end
+	end
+	print(hit);
+	return hit ~= nil;
+end
+local function WaitForAPLayer()
+	for i, v in pairs(game.Players:GetChildren()) do
+		if(v:isA("Player")) then
+			return v;
+		end
+	end
+end
+function testGetProjectileAnglesOnPart(onPlayers)
+	local bulletsModel = Instance.new("Model", workspace);
+	bulletsModel.Name = "Bullets Model";
+	local p1 = workspace:WaitForChild("testPart1");
+	local p2 = workspace:WaitForChild("testPart2");
+	local v = 150;
+	local x = 0;
+	local waitTime = 20; -- in frames
+	local initialCF = p1.CFrame;
+	while wait() do
+		if(onPlayers) then
+			local player = WaitForAPLayer();
+			local c = player.Character or player.CharacterAdded:wait();
+			p2 = c:WaitForChild("HumanoidRootPart");
+		end
+		local xAngleWanted = CheckForObjectsBetweenTanks(p1, p2.Parent) and 1 or 2;
+		local xAngle, yAngle = GetProjectileAngles(p1.CFrame, p2.CFrame, v, xAngleWanted);
+		--PrintAngles(xAngle, yAngle);
+		xAngle = isNan(xAngle) and 0 or xAngle;
+--		print("Check xAngle", xAngle);
+		p1.CFrame = CFrame.new(initialCF.p)*CFrame.fromAxisAngle(Vector3.new(0, 1, 0), yAngle)*CFrame.fromAxisAngle(Vector3.new(1, 0, 0), xAngle);
+		if(x > waitTime) then
+			x = 0;
+			CreateProjectile(p1, v, bulletsModel);
+		else
+			x = x + 1;
+		end
+	end
+	--print(math.deg(xAngle), math.deg(yAngle));
+end
+testGetProjectileAnglesOnPart(true);
