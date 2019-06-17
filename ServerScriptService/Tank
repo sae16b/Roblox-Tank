@@ -98,3 +98,5 @@ function testGetProjectileAnglesOnPart(onPlayers)
 	--print(math.deg(xAngle), math.deg(yAngle));
 end
 testGetProjectileAnglesOnPart(true);
+
+-- updating for test
